@@ -1,7 +1,7 @@
-<h2>Import Excel - 3 Kolom (Excel langsung)</h2>
+<h2>Test Upload Excel - 1 Baris</h2>
 <input type="file" id="excelFile" />
 <button id="uploadBtn">Upload</button>
-<div id="status"></div>
+<pre id="status"></pre>
 
 <script>
 document.getElementById('uploadBtn').addEventListener('click', async () => {
@@ -19,12 +19,9 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   statusDiv.textContent = 'Uploading...';
 
   try {
-    const res = await fetch('/api/importExcel', {
-      method: 'POST',
-      body: formData
-    });
-
+    const res = await fetch('/api/testDb', { method: 'POST', body: formData });
     const text = await res.text();
+
     let result;
     try {
       result = JSON.parse(text);
@@ -33,13 +30,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
       return;
     }
 
-    let display = result.message;
-    if (result.failedRows && result.failedRows.length > 0) {
-      display += '\nBaris gagal:\n';
-      result.failedRows.forEach(f => display += `Baris ${f.rowNumber}: ${f.error}\n`);
-    }
-
-    statusDiv.textContent = display;
+    statusDiv.textContent = JSON.stringify(result, null, 2);
 
   } catch (err) {
     statusDiv.textContent = 'Fetch error: ' + err.message;
