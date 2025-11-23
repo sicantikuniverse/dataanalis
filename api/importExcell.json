@@ -8,66 +8,85 @@ export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ ok: false, message: 'Method not allowed' });
   }
 
-  const form = new formidable.IncomingForm();
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      return res.status(500).json({ message: 'Upload gagal: ' + err.message });
-    }
+  try {
+    const form = new formidable.IncomingForm();
 
-    if (!files.file) {
-      return res.status(400).json({ message: 'File tidak ditemukan' });
-    }
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return res.status(500).json({ ok: false, message: 'Form parse error: ' + err.message });
+      }
 
-    try {
-      const workbook = xlsx.readFile(files.file.filepath);
+      if (!files.file) {
+        return res.status(400).json({ ok: false, message: 'File tidak ditemukan' });
+      }
+
+      let workbook;
+      try {
+        workbook = xlsx.readFile(files.file.filepath);
+      } catch (e) {
+        return res.status(500).json({ ok: false, message: 'Gagal membaca Excel: ' + e.message });
+      }
+
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const data = xlsx.utils.sheet_to_json(sheet);
 
-      if (data.length === 0) {
-        return res.status(400).json({ message: 'File Excel kosong' });
+      if (!data || data.length === 0) {
+        return res.status(400).json({ ok: false, message: 'File Excel kosong' });
       }
 
-      const connection = await mysql.createConnection({
-        host: '163.53.195.14',
-        user: 'chelsea',
-        password: 'chelsea',
-        database: 'dataanalis',
-      });
+      let connection;
+      try {
+        connection = await mysql.createConnection({
+          host: '163.53.195.14',
+          user: 'chelsea',
+          password: 'chelsea',
+          database: 'dataanalis',
+        });
+      } catch (dbErr) {
+        return res.status(500).json({ ok: false, message: 'Gagal konek MySQL: ' + dbErr.message });
+      }
 
-      let successCount = 0;
-      let failedRows = [];
+      let success = 0;
+      let failed = [];
 
       for (let i = 0; i < data.length; i++) {
         const row = data[i];
 
         try {
           await connection.execute(
-            `INSERT INTO penjualan (kd_outlet, nm_outlet, no_doc) VALUES (?,?,?)`,
+            `INSERT INTO penjualan (kd_outlet, nm_outlet, no_doc)
+             VALUES (?, ?, ?)`,
             [
-              row.kd_outlet,
-              row.nm_outlet,
-              row.no_doc
+              row.kd_outlet || '',
+              row.nm_outlet || '',
+              row.no_doc || ''
             ]
           );
-          successCount++;
-        } catch (errRow) {
-          failedRows.push({ rowNumber: i + 2, error: errRow.message });
+          success++;
+        } catch (rowErr) {
+          failed.push({
+            row: i + 2,
+            error: rowErr.message
+          });
         }
       }
 
       await connection.end();
 
       return res.status(200).json({
-        message: `Import selesai: ${successCount} baris berhasil, ${failedRows.length} gagal`,
-        failedRows
+        ok: true,
+        message: `Import selesai`,
+        sukses: success,
+        gagal: failed.length,
+        detailGagal: failed
       });
+    });
 
-    } catch (error) {
-      console.error('Error main function:', error);
-      return res.status(500).json({ message: 'Database / Excel error: ' + error.message });
-    }
-  });
+  } catch (fatal) {
+    // fallback error JSON (tidak pernah HTML)
+    return res.status(500).json({ ok: false, message: 'Fatal error: ' + fatal.message });
+  }
 }
