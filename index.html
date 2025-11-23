@@ -1,3 +1,6 @@
+<h2>Import Excel ke Database</h2>
+<input type="file" id="excelFile" />
+<button id="uploadBtn">Upload</button>
 <div id="status"></div>
 
 <script>
@@ -15,16 +18,12 @@
     const statusDiv = document.getElementById('status');
     statusDiv.textContent = 'Uploading...';
 
-    try {
-      const res = await fetch('/api/importExcel', {
-        method: 'POST',
-        body: formData
-      });
+    const res = await fetch('/api/importExcel', {
+      method: 'POST',
+      body: formData
+    });
 
-      const result = await res.json();
-      statusDiv.textContent = result.message;  // ← pesan sukses / error dari server
-    } catch (err) {
-      statusDiv.textContent = 'Error: ' + err.message;
-    }
+    const result = await res.json();
+    statusDiv.textContent = result.message;
   });
 </script>
