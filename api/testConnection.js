@@ -3,24 +3,19 @@ import mysql from 'mysql2/promise';
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ ok: false, message: 'Method not allowed' });
-  }
-
   try {
     const connection = await mysql.createConnection({
-      host: '163.53.195.14',
+      host: '163.53.195.14', // IP CloudRaya
+      port: 3306,             // port MySQL
       user: 'chelsea',
       password: 'chelsea',
-      database: 'dataanalis',
-      port: 3306
+      database: 'dataanalis'
     });
 
     await connection.end();
 
-    return res.status(200).json({ ok: true, message: 'Koneksi MySQL berhasil!' });
-
+    res.status(200).json({ ok: true, message: 'Koneksi MySQL berhasil dari Vercel!' });
   } catch (err) {
-    return res.status(500).json({ ok: false, message: 'Koneksi gagal: ' + err.message });
+    res.status(500).json({ ok: false, message: 'Gagal koneksi MySQL dari Vercel: ' + err.message });
   }
 }
