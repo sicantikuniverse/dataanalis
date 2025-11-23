@@ -5,26 +5,37 @@ import mysql from 'mysql2/promise';
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+  // Pastikan selalu mengembalikan JSON
+  res.setHeader('Content-Type', 'application/json');
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
   const form = new formidable.IncomingForm();
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ message: 'Upload gagal: ' + err.message });
+    if (err) {
+      return res.status(500).json({ message: 'Upload gagal: ' + err.message });
+    }
 
-    if (!files.file) return res.status(400).json({ message: 'File tidak ditemukan' });
+    if (!files.file) {
+      return res.status(400).json({ message: 'File tidak ditemukan' });
+    }
 
     try {
       const workbook = xlsx.readFile(files.file.filepath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const data = xlsx.utils.sheet_to_json(sheet);
 
-      if (data.length === 0) return res.status(400).json({ message: 'File Excel kosong' });
+      if (data.length === 0) {
+        return res.status(400).json({ message: 'File Excel kosong' });
+      }
 
       const connection = await mysql.createConnection({
-        host: '163.53.195.14',     // IP / host database
-        user: 'chelsea',           // username database
-        password: 'chelsea',       // password database
-        database: 'dataanalis',    // nama database
+        host: '163.53.195.14',
+        user: 'chelsea',
+        password: 'chelsea',
+        database: 'dataanalis',
       });
 
       let successCount = 0;
@@ -45,20 +56,20 @@ export default async function handler(req, res) {
           );
           successCount++;
         } catch (errRow) {
-          failedRows.push({ rowNumber: i + 2, error: errRow.message }); // +2 karena header Excel = baris 1
+          failedRows.push({ rowNumber: i + 2, error: errRow.message });
         }
       }
 
       await connection.end();
 
-      res.status(200).json({
+      return res.status(200).json({
         message: `Import selesai: ${successCount} baris berhasil, ${failedRows.length} gagal`,
         failedRows,
       });
 
     } catch (error) {
       console.error('Error main function:', error);
-      res.status(500).json({ message: 'Database / Excel error: ' + error.message });
+      return res.status(500).json({ message: 'Database / Excel error: ' + error.message });
     }
   });
 }
