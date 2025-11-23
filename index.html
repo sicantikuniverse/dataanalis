@@ -1,10 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Website Saya</title>
-</head>
-<body>
-    <h1>Halo, website saya sudah online!</h1>
-    <p>Ini halaman HTML sederhana.</p>
-</body>
-</html>
+<h2>Import Excel ke Database</h2>
+<input type="file" id="excelFile" />
+<button id="uploadBtn">Upload</button>
+<div id="status"></div>
+
+<script>
+  document.getElementById('uploadBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('excelFile');
+    if (!fileInput.files.length) {
+      alert('Pilih file Excel dulu!');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const statusDiv = document.getElementById('status');
+    statusDiv.textContent = 'Uploading...';
+
+    const res = await fetch('/api/importExcel', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await res.json();
+    statusDiv.textContent = result.message;
+  });
+</script>
