@@ -1,4 +1,4 @@
-<h2>Import Excel ke Database Penjualan</h2>
+<h2>Import Excel ke Tabel Penjualan</h2>
 <input type="file" id="excelFile" />
 <button id="uploadBtn">Upload</button>
 <div id="status"></div>
@@ -24,19 +24,25 @@
         body: formData
       });
 
-      const result = await res.json();
-
-      let text = result.message;
-      if (result.failedRows && result.failedRows.length > 0) {
-        text += '\nBaris gagal:\n';
-        result.failedRows.forEach(f => {
-          text += `Baris ${f.rowNumber}: ${f.error}\n`;
-        });
+      const text = await res.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        statusDiv.textContent = 'Response bukan JSON:\n' + text;
+        return;
       }
 
-      statusDiv.textContent = text;
+      let display = result.message;
+      if (result.failedRows && result.failedRows.length > 0) {
+        display += '\nBaris gagal:\n';
+        result.failedRows.forEach(f => display += `Baris ${f.rowNumber}: ${f.error}\n`);
+      }
+
+      statusDiv.textContent = display;
+
     } catch (err) {
-      statusDiv.textContent = 'Error: ' + err.message;
+      statusDiv.textContent = 'Fetch error: ' + err.message;
     }
   });
 </script>
