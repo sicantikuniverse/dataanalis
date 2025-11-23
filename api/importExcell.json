@@ -2,31 +2,42 @@ import formidable from 'formidable';
 import xlsx from 'xlsx';
 import mysql from 'mysql2/promise';
 
+// Nonaktifkan bodyParser default Next.js karena kita pakai formidable
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
+  // Semua response akan JSON
   res.setHeader('Content-Type', 'application/json');
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, message: 'Method not allowed' });
-  }
-
   try {
+    console.log('Mulai request');
+
+    if (req.method !== 'POST') {
+      console.log('Method tidak allowed');
+      return res.status(405).json({ ok: false, message: 'Method not allowed' });
+    }
+
     const form = new formidable.IncomingForm();
 
     form.parse(req, async (err, fields, files) => {
+      console.log('Form parse selesai');
+
       if (err) {
+        console.log('Form parse error:', err);
         return res.status(500).json({ ok: false, message: 'Form parse error: ' + err.message });
       }
 
       if (!files.file) {
+        console.log('File tidak ditemukan');
         return res.status(400).json({ ok: false, message: 'File tidak ditemukan' });
       }
 
       let workbook;
       try {
         workbook = xlsx.readFile(files.file.filepath);
+        console.log('Excel berhasil dibaca');
       } catch (e) {
+        console.log('Error baca Excel:', e);
         return res.status(500).json({ ok: false, message: 'Gagal membaca Excel: ' + e.message });
       }
 
@@ -34,6 +45,7 @@ export default async function handler(req, res) {
       const data = xlsx.utils.sheet_to_json(sheet);
 
       if (!data || data.length === 0) {
+        console.log('File Excel kosong');
         return res.status(400).json({ ok: false, message: 'File Excel kosong' });
       }
 
@@ -45,7 +57,9 @@ export default async function handler(req, res) {
           password: 'chelsea',
           database: 'dataanalis',
         });
+        console.log('Connected ke MySQL');
       } catch (dbErr) {
+        console.log('Error koneksi MySQL:', dbErr);
         return res.status(500).json({ ok: false, message: 'Gagal konek MySQL: ' + dbErr.message });
       }
 
@@ -54,39 +68,34 @@ export default async function handler(req, res) {
 
       for (let i = 0; i < data.length; i++) {
         const row = data[i];
+        console.log('Insert row', i + 1, row);
 
         try {
           await connection.execute(
-            `INSERT INTO penjualan (kd_outlet, nm_outlet, no_doc)
-             VALUES (?, ?, ?)`,
-            [
-              row.kd_outlet || '',
-              row.nm_outlet || '',
-              row.no_doc || ''
-            ]
+            `INSERT INTO penjualan (kd_outlet, nm_outlet, no_doc) VALUES (?, ?, ?)`,
+            [row.kd_outlet, row.nm_outlet, row.no_doc]
           );
           success++;
         } catch (rowErr) {
-          failed.push({
-            row: i + 2,
-            error: rowErr.message
-          });
+          console.log('Row insert error:', rowErr);
+          failed.push({ row: i + 2, error: rowErr.message });
         }
       }
 
       await connection.end();
+
+      console.log('Import selesai');
 
       return res.status(200).json({
         ok: true,
         message: `Import selesai`,
         sukses: success,
         gagal: failed.length,
-        detailGagal: failed
+        detailGagal: failed,
       });
     });
-
   } catch (fatal) {
-    // fallback error JSON (tidak pernah HTML)
+    console.log('Fatal error:', fatal);
     return res.status(500).json({ ok: false, message: 'Fatal error: ' + fatal.message });
   }
 }
