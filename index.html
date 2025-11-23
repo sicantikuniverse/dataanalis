@@ -1,36 +1,17 @@
-<h2>Test Upload Excel - 1 Baris</h2>
-<input type="file" id="excelFile" />
-<button id="uploadBtn">Upload</button>
+<h2>Test Koneksi MySQL</h2>
+<button id="testBtn">Tes Koneksi</button>
 <pre id="status"></pre>
 
 <script>
-document.getElementById('uploadBtn').addEventListener('click', async () => {
-  const fileInput = document.getElementById('excelFile');
-  if (!fileInput.files.length) {
-    alert('Pilih file Excel dulu!');
-    return;
-  }
-
-  const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append('file', file);
-
+document.getElementById('testBtn').addEventListener('click', async () => {
   const statusDiv = document.getElementById('status');
-  statusDiv.textContent = 'Uploading...';
+  statusDiv.textContent = 'Mengecek koneksi...';
 
   try {
-    const res = await fetch('/api/testDb', { method: 'POST', body: formData });
-    const text = await res.text();
+    const res = await fetch('/api/testConnection');
+    const data = await res.json();
 
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch (e) {
-      statusDiv.textContent = 'Response bukan JSON:\n' + text;
-      return;
-    }
-
-    statusDiv.textContent = JSON.stringify(result, null, 2);
+    statusDiv.textContent = JSON.stringify(data, null, 2);
 
   } catch (err) {
     statusDiv.textContent = 'Fetch error: ' + err.message;
