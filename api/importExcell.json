@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
           await connection.execute(
             `INSERT INTO penjualan (
-              tanggal,kd_outlet,nm_outlet,no_doc,kd_sales,namasales,kelompok,merkbrand,namabrg,kode_iemi,qty,harga,jumlah,hpp,RL,mdrsupport,bank,grandtot,byrcash,byrgesek,adminbank,cashback,pwp,mdrnominal,admbyrcust,tukartambah,totomzet,programcashback,programpwp,ketmdr,no_reffbank,namamarket,Cust,namacust,alamat,kota,no_telp,email,keterangan,hargasrp,potongan
+              tanggal,kd_outlet,nm_outlet,no_doc,kd_sales,namasales,kelompok,merkbrand,namabrg,kode_imei,qty,harga,jumlah,hpp,RL,mdrsupport,bank,grandtot,byrcash,byrgesek,adminbank,cashback,pwp,mdrnominal,admbyrcust,tukartambah,totomzet,programcashback,programpwp,ketmdr,no_reffbank,namamarket,Cust,namacust,alamat,kota,no_telp,email,keterangan,hargasrp,potongan
             ) VALUES (
               ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
             )`,
