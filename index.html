@@ -1,48 +1,48 @@
-<h2>Import Excel ke Tabel Penjualan</h2>
+<h2>Import Excel - 3 Kolom (Excel langsung)</h2>
 <input type="file" id="excelFile" />
 <button id="uploadBtn">Upload</button>
 <div id="status"></div>
 
 <script>
-  document.getElementById('uploadBtn').addEventListener('click', async () => {
-    const fileInput = document.getElementById('excelFile');
-    if (!fileInput.files.length) {
-      alert('Pilih file Excel dulu!');
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  const fileInput = document.getElementById('excelFile');
+  if (!fileInput.files.length) {
+    alert('Pilih file Excel dulu!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const statusDiv = document.getElementById('status');
+  statusDiv.textContent = 'Uploading...';
+
+  try {
+    const res = await fetch('/api/importExcel', {
+      method: 'POST',
+      body: formData
+    });
+
+    const text = await res.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      statusDiv.textContent = 'Response bukan JSON:\n' + text;
       return;
     }
 
-    const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const statusDiv = document.getElementById('status');
-    statusDiv.textContent = 'Uploading...';
-
-    try {
-      const res = await fetch('/api/importExcel', {
-        method: 'POST',
-        body: formData
-      });
-
-      const text = await res.text();
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        statusDiv.textContent = 'Response bukan JSON:\n' + text;
-        return;
-      }
-
-      let display = result.message;
-      if (result.failedRows && result.failedRows.length > 0) {
-        display += '\nBaris gagal:\n';
-        result.failedRows.forEach(f => display += `Baris ${f.rowNumber}: ${f.error}\n`);
-      }
-
-      statusDiv.textContent = display;
-
-    } catch (err) {
-      statusDiv.textContent = 'Fetch error: ' + err.message;
+    let display = result.message;
+    if (result.failedRows && result.failedRows.length > 0) {
+      display += '\nBaris gagal:\n';
+      result.failedRows.forEach(f => display += `Baris ${f.rowNumber}: ${f.error}\n`);
     }
-  });
+
+    statusDiv.textContent = display;
+
+  } catch (err) {
+    statusDiv.textContent = 'Fetch error: ' + err.message;
+  }
+});
 </script>

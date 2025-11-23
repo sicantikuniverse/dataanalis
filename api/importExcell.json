@@ -37,12 +37,6 @@ export default async function handler(req, res) {
         database: 'dataanalis',
       });
 
-      // Helper untuk ganti '-' atau kosong menjadi 0
-      const safeValue = val => {
-        if (val === '-' || val === undefined || val === null || val === '') return 0;
-        return val;
-      };
-
       let successCount = 0;
       let failedRows = [];
 
@@ -50,61 +44,14 @@ export default async function handler(req, res) {
         const row = data[i];
 
         try {
-          // Konversi tanggal Excel ke yyyy-mm-dd
-          const excelDate = new Date(row.tanggal);
-          const tanggalFormatted = `${excelDate.getFullYear()}-${excelDate.getMonth()+1}-${excelDate.getDate()}`;
-
           await connection.execute(
-            `INSERT INTO penjualan (
-              tanggal,kd_outlet,nm_outlet,no_doc,kd_sales,namasales,kelompok,merkbrand,namabrg,kode_imei,qty,harga,jumlah,hpp,RL,mdrsupport,bank,grandtot,byrcash,byrgesek,adminbank,cashback,pwp,mdrnominal,admbyrcust,tukartambah,totomzet,programcashback,programpwp,ketmdr,no_reffbank,namamarket,Cust,namacust,alamat,kota,no_telp,email,keterangan,hargasrp,potongan
-            ) VALUES (
-              ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
-            )`,
+            `INSERT INTO penjualan (kd_outlet, nm_outlet, no_doc) VALUES (?,?,?)`,
             [
-              tanggalFormatted,
               row.kd_outlet,
               row.nm_outlet,
-              row.no_doc,
-              row.kd_sales,
-              row.namasales,
-              row.Kelompok,             // sesuai header Excel
-              row.merkbrand,
-              row.namabrg,
-              row.kode_imei,            // header Excel 'kode_imei' → MySQL 'kode_iemi'
-              row.qty,
-              row.harga,
-              row.jumlah,
-              row.hpp,
-              safeValue(row.RL),
-              safeValue(row.mdrsupport),
-              row.bank,
-              row.grandtot,
-              safeValue(row.byrcash),
-              safeValue(row.byrgesek),
-              safeValue(row.adminbank),
-              safeValue(row.cashback),
-              safeValue(row.pwp),
-              safeValue(row.mdrnominal),
-              safeValue(row.admbyrcust),
-              safeValue(row.tukartambah),
-              row.totomzet,
-              safeValue(row.programcashback),
-              safeValue(row.programpwp),
-              row.ketmdr,
-              row.no_reffbank,
-              row.namamarket,
-              row.Cust,
-              row.namacust,
-              row.alamat,
-              row.kota,
-              row.no_telp,
-              row.email,
-              row.keterangan,
-              row.hargasrp,
-              row.potongan
+              row.no_doc
             ]
           );
-
           successCount++;
         } catch (errRow) {
           failedRows.push({ rowNumber: i + 2, error: errRow.message });
