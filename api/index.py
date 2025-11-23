@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, redirect
 import sqlite3
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
-# Lokasi database (wajib absolute path untuk Vercel)
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "../database.db")
 
 def db():
     conn = sqlite3.connect(DB_PATH)
@@ -28,11 +27,6 @@ def add():
     conn.close()
     return redirect("/")
 
-# Wajib untuk Vercel
-def vercel_app():
+# Vercel handler
+def handler(request):
     return app
-
-app = vercel_app()
-
-if __name__ == "__main__":
-    app.run(debug=True)
