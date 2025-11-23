@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
+import os
 
 app = Flask(__name__)
 
+# Path database (disimpan di folder yang sama dengan app.py)
+DB_PATH = os.path.join(os.path.dirname(__file__), "database.db")
+
 def db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -24,5 +28,6 @@ def add():
     conn.close()
     return redirect("/")
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+# Untuk Vercel: handler WSGI
+def handler(request, response):
+    return app
